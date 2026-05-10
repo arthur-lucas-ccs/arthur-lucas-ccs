@@ -19,29 +19,38 @@ jobs:
             dist/github-contribution-grid-snake.svg?color_snake=chocolate
             dist/github-contribution-grid-snake-dark.svg?palette=github-dark&color_snake=darkorange
 
-      - name: Apply autumn colors (dark)
+      - name: Apply autumn colors
         run: |
-          sed -i \
-            -e 's/#161b22/#1a0e08/g' \
-            -e 's/#0e4429/#3d200a/g' \
-            -e 's/#006d32/#7a3b10/g' \
-            -e 's/#26a641/#b55a1e/g' \
-            -e 's/#39d353/#d4843e/g' \
-            dist/github-contribution-grid-snake-dark.svg
+          python3 - <<'PYEOF'
+          def apply(path, reps):
+              content = open(path).read()
+              for old, new in reps.items():
+                  content = content.replace(old, new).replace(old.upper(), new)
+              open(path, 'w').write(content)
+              print(f"Done: {path}")
 
-      - name: Apply autumn colors (light)
+          apply('dist/github-contribution-grid-snake-dark.svg', {
+              '#161b22': '#1a0e08',
+              '#0e4429': '#3d200a',
+              '#006d32': '#7a3b10',
+              '#26a641': '#b55a1e',
+              '#39d353': '#d4843e',
+          })
+          apply('dist/github-contribution-grid-snake.svg', {
+              '#ebedf0': '#f5e6d8',
+              '#9be9a8': '#e8b98a',
+              '#40c463': '#c4772a',
+              '#30a14e': '#9b4f14',
+              '#216e39': '#6b2d08',
+          })
+          PYEOF
+
+      - name: Push to output branch
         run: |
-          sed -i \
-            -e 's/#ebedf0/#f5e6d8/g' \
-            -e 's/#9be9a8/#e8b98a/g' \
-            -e 's/#40c463/#c4772a/g' \
-            -e 's/#30a14e/#9b4f14/g' \
-            -e 's/#216e39/#6b2d08/g' \
-            dist/github-contribution-grid-snake.svg
-
-      - uses: crazy-max/ghaction-github-pages@v4
-        with:
-          target_branch: output
-          build_dir: dist
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          cd dist
+          git init
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add .
+          git commit -m "chore: update snake animation"
+          git push --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:output
